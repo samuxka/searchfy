@@ -46,29 +46,30 @@ export default function ArtistPage() {
       <div className="w-full flex justify-end">
         <Link href="/" className='hover:underline'>Back to home</Link>
       </div>
-      <div className="center flex-col">
-        <div className="flex items-center gap-4 mb-8">
+      <div className="center flex-col mt-4">
+        <div className="flex items-center justify-center flex-col gap-4 mb-8 ">
           <Image
             src={artist.images[0]?.url || '/placeholder.png'}
             alt={artist.name}
             width={1080}
             height={1920}
-            className="w-40 h-40"
+            className="size-20 sm:size-40"
           />
-          <div>
-            <h1 className="text-4xl font-bold mb-2">{artist.name}</h1>
-            <div className='flex gap-2'>
-              <p className="center gap-2"><Heart size={20} /> {artist.popularity}/100</p>
-              <p className='text-gray-500'>|</p>
-              <p className="center gap-2"><User size={20} /> {followers.toLocaleString()}</p>
-              <p className='text-gray-500'>|</p>
-              <p className="center gap-2"><AudioLines size={20} /> {totalTracks.toLocaleString()}</p>
+          <div className='text-center'>
+            <h1 className="text-xl sm:text-4xl font-bold mb-2">{artist.name}</h1>
+            <div className='flex flex-col sm:flex-row gap-2'>
+              <p className="center text-sm sm:text-lg gap-2"><Heart size={20} /> {artist.popularity}/100</p>
+              <p className='text-gray-500 hidden sm:block'>|</p>
+              <p className="center text-sm sm:text-lg gap-2"><User size={20} /> {followers.toLocaleString()}</p>
+              <p className='text-gray-500 hidden sm:block'>|</p>
+              <p className="center text-sm sm:text-lg gap-2"><AudioLines size={20} /> {totalTracks.toLocaleString()}</p>
             </div>
           </div>
         </div>
 
-        <div className='flex justify-between w-full gap-5 px-8'>
-          <div className="alltracks w-2/3">
+        <div className='flex flex-col-reverse lg:flex-row
+         lg:justify-between w-full gap-5 px-8'>
+          <div className="alltracks w-full lg:w-2/3">
             <h2 className="text-2xl font-semibold mb-4">Todas as Músicas</h2>
             <ScrollArea className="h-96 rounded-sm border">
               <ul className="space-y-2">
@@ -82,7 +83,7 @@ export default function ArtistPage() {
 
           </div>
 
-          <div className="toptracks w-1/3">
+          <div className="toptracks w-full lg:w-1/3">
             <h2 className="text-2xl font-semibold mb-4">Top 10 Mais Ouvidas</h2>
             <ul className="space-y-2">
               {topTracks.map((track: any) => (

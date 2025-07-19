@@ -5,7 +5,7 @@ import SearchBar from '@/components/SearchBar'
 function page() {
   return (
     <section className='w-full h-screen center'>
-      <div className='center flex-col'>
+      <div className='center flex-col p-10'>
         <div className='center flex-col mb-8'>
           <div className="flex items-center gap-3 mb-8">
             <Icon icon="eos-icons:network" className='size-14' />

@@ -40,7 +40,7 @@ function SearchBar() {
           onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
         />
         <Button
-          className="h-12 bg-[#057CB7] hover:bg-[#057CB7]/80 text-white"
+          className="h-12 bg-[#057CB7] hover:bg-[#057CB7]/80 text-white hidden sm:block"
           onClick={() => handleSearch(query)}
         >
           Pesquisar
