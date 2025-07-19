@@ -57,7 +57,7 @@ function SearchBar() {
               onClick={() => handleSearch(artist.name)}
             >
               {artist.image && (
-                <Image src={artist.image} alt={artist.name} className="w-8 h-8 rounded-full" />
+                <Image src={artist.image} alt={artist.name} width={1080} height={1080} className="w-8 h-8 rounded-full" />
               )}
               <span>{artist.name}</span>
             </li>
