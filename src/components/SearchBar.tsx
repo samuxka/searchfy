@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 function SearchBar() {
   const [query, setQuery] = useState('');
@@ -56,7 +57,7 @@ function SearchBar() {
               onClick={() => handleSearch(artist.name)}
             >
               {artist.image && (
-                <img src={artist.image} alt={artist.name} className="w-8 h-8 rounded-full" />
+                <Image src={artist.image} alt={artist.name} className="w-8 h-8 rounded-full" />
               )}
               <span>{artist.name}</span>
             </li>

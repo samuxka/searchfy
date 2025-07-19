@@ -1,6 +1,5 @@
 import React from 'react'
 import { ModeToggle } from './ModeToggle';
-import Link from 'next/link';
 
 function Header() {
   return (

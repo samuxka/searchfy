@@ -1,3 +1,4 @@
+// src/types/spotify.ts
 export interface SpotifyAlbum {
   id: string;
   name: string;

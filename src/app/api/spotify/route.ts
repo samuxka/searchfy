@@ -1,34 +1,33 @@
 // src/app/api/spotify/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import axios, { AxiosError } from 'axios';
 import {
   SpotifyAlbum,
   SpotifyAlbumsResponse,
+  SpotifyTrack,
   SpotifyTracksResponse,
   SpotifyTopTracksResponse,
   SpotifyArtistResponse,
-  SpotifyTrack
 } from '@/types/spotify';
 
-// Utility to handle environment variables safely
+// Validação de variáveis de ambiente
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
 if (!clientId || !clientSecret) {
-  throw new Error('Spotify client ID or secret is missing');
+  throw new Error('SPOTIFY_CLIENT_ID ou SPOTIFY_CLIENT_SECRET não estão definidos');
 }
 
-// Interface for the API response
+// Interface para a resposta da API
 interface ArtistDataResponse {
-  artist: SpotifyArtistResponse['data'];
+  artist: SpotifyArtistResponse;
   followers: number;
   totalTracks: number;
-  topTracks: SpotifyTopTracksResponse['tracks'];
+  topTracks: SpotifyTrack[];
   allTracks: SpotifyTrack[];
 }
 
-// Get Spotify access token
+// Obtém o token de acesso do Spotify
 async function getAccessToken(): Promise<string> {
   try {
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
@@ -38,37 +37,37 @@ async function getAccessToken(): Promise<string> {
       {
         headers: {
           Authorization: `Basic ${auth}`,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       }
     );
     return res.data.access_token;
-  } catch (err) {
-    throw new Error('Failed to obtain Spotify access token');
+  } catch {
+    throw new Error('Falha ao obter o token de acesso do Spotify');
   }
 }
 
-// Fetch albums with pagination
+// Busca álbuns com paginação
 async function fetchAlbums(artistId: string, accessToken: string): Promise<SpotifyAlbum[]> {
   const albums: SpotifyAlbum[] = [];
   let nextUrl: string | null = `https://api.spotify.com/v1/artists/${artistId}/albums?limit=50&include_groups=album,single`;
 
   while (nextUrl) {
     try {
-      const albumsRes = await axios.get<SpotifyAlbumsResponse>(nextUrl, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      albums.push(...albumsRes.data.items);
-      nextUrl = albumsRes.data.next;
-    } catch (err) {
-      throw new Error(`Failed to fetch albums: ${err}`);
+      const albumsRes: SpotifyAlbumsResponse = await axios.get<SpotifyAlbumsResponse>(nextUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }).then(res => res.data);
+      albums.push(...albumsRes.items);
+      nextUrl = albumsRes.next;
+    } catch {
+      throw new Error('Falha ao buscar álbuns');
     }
   }
 
   return albums;
 }
 
-// Fetch all tracks for an artist
+// Busca todas as faixas de um artista
 async function getAllTracks(artistId: string, accessToken: string): Promise<{ tracks: SpotifyTrack[]; totalTracks: number }> {
   const albums = await fetchAlbums(artistId, accessToken);
   let totalTracks = 0;
@@ -80,13 +79,13 @@ async function getAllTracks(artistId: string, accessToken: string): Promise<{ tr
       const tracksRes = await axios.get<SpotifyTracksResponse>(
         `https://api.spotify.com/v1/albums/${album.id}/tracks`,
         {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
       allTracks.push(...tracksRes.data.items);
-    } catch (err) {
-      console.warn(`Failed to fetch tracks for album ${album.id}: ${err}`);
-      continue; // Skip failed albums
+    } catch {
+      console.warn(`Falha ao buscar faixas do álbum ${album.id}`);
+      continue; // Continua para o próximo álbum em caso de erro
     }
   }
 
@@ -96,45 +95,48 @@ async function getAllTracks(artistId: string, accessToken: string): Promise<{ tr
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const query = url.searchParams.get('query');
-  const market = url.searchParams.get('market') || 'BR'; // Configurable market
+  const market = url.searchParams.get('market') || 'BR'; // Mercado configurável
 
   if (!query) {
-    return NextResponse.json({ error: 'Query parameter is required' }, { status: 400 });
+    return NextResponse.json({ error: 'Parâmetro query é obrigatório' }, { status: 400 });
   }
 
   try {
     const token = await getAccessToken();
 
-    // Search for artist
-    const searchRes = await axios.get('https://api.spotify.com/v1/search', {
-      params: { q: query, type: 'artist', limit: 1 },
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    // Busca o artista
+    const searchRes = await axios.get<{ artists: { items: SpotifyArtistResponse[] } }>(
+      'https://api.spotify.com/v1/search',
+      {
+        params: { q: query, type: 'artist', limit: 1 },
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
     const artist = searchRes.data.artists.items[0];
     if (!artist) {
-      return NextResponse.json({ error: 'Artist not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Artista não encontrado' }, { status: 404 });
     }
 
-    // Fetch artist details
+    // Busca detalhes do artista
     const artistRes = await axios.get<SpotifyArtistResponse>(
       `https://api.spotify.com/v1/artists/${artist.id}`,
       {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
     const followers = artistRes.data.followers.total;
 
-    // Fetch top tracks
+    // Busca as principais faixas
     const topTracksRes = await axios.get<SpotifyTopTracksResponse>(
       `https://api.spotify.com/v1/artists/${artist.id}/top-tracks`,
       {
         params: { market },
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
 
-    // Fetch all tracks and total track count
+    // Busca todas as faixas e contagem total
     const { tracks: allTracks, totalTracks } = await getAllTracks(artist.id, token);
 
     return NextResponse.json<ArtistDataResponse>({
@@ -142,14 +144,14 @@ export async function GET(req: NextRequest) {
       followers,
       totalTracks,
       topTracks: topTracksRes.data.tracks,
-      allTracks
+      allTracks,
     });
-  } catch (err) {
-    const error = err as AxiosError;
-    if (error.response?.status === 429) {
-      return NextResponse.json({ error: 'Rate limit exceeded, please try again later' }, { status: 429 });
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    if (axiosError.response?.status === 429) {
+      return NextResponse.json({ error: 'Limite de requisições excedido, tente novamente mais tarde' }, { status: 429 });
     }
-    console.error('Error in Spotify API route:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Erro na rota da API do Spotify:', error);
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }
