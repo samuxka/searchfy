@@ -1,4 +1,3 @@
-// src/app/artist/ArtistContent.tsx
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -9,7 +8,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import { SpotifyArtistResponse, SpotifyTrack } from '@/types/spotify';
 
-// Interface para a resposta da API /api/spotify
 interface ArtistDataResponse {
   error: string;
   artist: SpotifyArtistResponse;

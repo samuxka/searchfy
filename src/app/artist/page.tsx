@@ -1,6 +1,5 @@
-// src/app/artist/page.tsx
 import { Suspense } from 'react';
-import ArtistContent from './ArtistContent'; // Novo componente para lógica do cliente
+import ArtistContent from './ArtistContent';
 
 export default function ArtistPage() {
   return (

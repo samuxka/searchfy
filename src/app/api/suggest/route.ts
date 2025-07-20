@@ -1,26 +1,22 @@
-// src/app/api/suggest/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import axios, { AxiosError } from 'axios';
 import { SpotifyArtistResponse } from '@/types/spotify';
 
-// Interface para a resposta da API de busca do Spotify
 interface SpotifySearchResponse {
   artists: {
     items: SpotifyArtistResponse[];
   };
 }
 
-// Interface para a resposta simplificada da rota
 interface SuggestResponse {
   artists: Array<{
     id: string;
     name: string;
     image: string | null;
   }>;
-  error?: string; // Adicionada propriedade opcional para erros
+  error?: string;
 }
 
-// Validação de variáveis de ambiente
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
@@ -28,7 +24,6 @@ if (!clientId || !clientSecret) {
   throw new Error('SPOTIFY_CLIENT_ID ou SPOTIFY_CLIENT_SECRET não estão definidos');
 }
 
-// Obtém o token de acesso do Spotify
 async function getAccessToken(): Promise<string> {
   try {
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');

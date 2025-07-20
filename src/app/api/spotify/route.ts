@@ -1,4 +1,3 @@
-// src/app/api/spotify/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import axios, { AxiosError } from 'axios';
 import {
@@ -10,7 +9,6 @@ import {
   SpotifyArtistResponse,
 } from '@/types/spotify';
 
-// Validação de variáveis de ambiente
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
@@ -18,7 +16,6 @@ if (!clientId || !clientSecret) {
   throw new Error('SPOTIFY_CLIENT_ID ou SPOTIFY_CLIENT_SECRET não estão definidos');
 }
 
-// Interface para a resposta da API
 interface ArtistDataResponse {
   artist: SpotifyArtistResponse;
   followers: number;
@@ -27,7 +24,6 @@ interface ArtistDataResponse {
   allTracks: SpotifyTrack[];
 }
 
-// Obtém o token de acesso do Spotify
 async function getAccessToken(): Promise<string> {
   try {
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
@@ -47,7 +43,6 @@ async function getAccessToken(): Promise<string> {
   }
 }
 
-// Busca álbuns com paginação
 async function fetchAlbums(artistId: string, accessToken: string): Promise<SpotifyAlbum[]> {
   const albums: SpotifyAlbum[] = [];
   let nextUrl: string | null = `https://api.spotify.com/v1/artists/${artistId}/albums?limit=50&include_groups=album,single`;
@@ -67,7 +62,6 @@ async function fetchAlbums(artistId: string, accessToken: string): Promise<Spoti
   return albums;
 }
 
-// Busca todas as faixas de um artista
 async function getAllTracks(artistId: string, accessToken: string): Promise<{ tracks: SpotifyTrack[]; totalTracks: number }> {
   const albums = await fetchAlbums(artistId, accessToken);
   let totalTracks = 0;
@@ -85,7 +79,7 @@ async function getAllTracks(artistId: string, accessToken: string): Promise<{ tr
       allTracks.push(...tracksRes.data.items);
     } catch {
       console.warn(`Falha ao buscar faixas do álbum ${album.id}`);
-      continue; // Continua para o próximo álbum em caso de erro
+      continue;
     }
   }
 
@@ -95,7 +89,7 @@ async function getAllTracks(artistId: string, accessToken: string): Promise<{ tr
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const query = url.searchParams.get('query');
-  const market = url.searchParams.get('market') || 'BR'; // Mercado configurável
+  const market = url.searchParams.get('market') || 'BR';
 
   if (!query) {
     return NextResponse.json({ error: 'Parâmetro query é obrigatório' }, { status: 400 });
@@ -104,7 +98,6 @@ export async function GET(req: NextRequest) {
   try {
     const token = await getAccessToken();
 
-    // Busca o artista
     const searchRes = await axios.get<{ artists: { items: SpotifyArtistResponse[] } }>(
       'https://api.spotify.com/v1/search',
       {
@@ -118,7 +111,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Artista não encontrado' }, { status: 404 });
     }
 
-    // Busca detalhes do artista
     const artistRes = await axios.get<SpotifyArtistResponse>(
       `https://api.spotify.com/v1/artists/${artist.id}`,
       {
@@ -127,7 +119,6 @@ export async function GET(req: NextRequest) {
     );
     const followers = artistRes.data.followers.total;
 
-    // Busca as principais faixas
     const topTracksRes = await axios.get<SpotifyTopTracksResponse>(
       `https://api.spotify.com/v1/artists/${artist.id}/top-tracks`,
       {
@@ -136,7 +127,6 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    // Busca todas as faixas e contagem total
     const { tracks: allTracks, totalTracks } = await getAllTracks(artist.id, token);
 
     return NextResponse.json<ArtistDataResponse>({
